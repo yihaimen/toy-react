@@ -34,15 +34,14 @@ export class Component {
     }
     return this._root;
   }
-
 }
 
 export function createElement(type, attributes, ...children) {
   let ele = null;
-  if (typeof type === 'string') {
+  if (typeof type === "string") {
     ele = new ElementWrapper(type);
   } else {
-    ele = new type;
+    ele = new type();
   }
 
   for (const attr in attributes) {
@@ -50,16 +49,16 @@ export function createElement(type, attributes, ...children) {
   }
   const insertChildren = (children) => {
     for (const child of children) {
-      if (typeof child === 'string') {
+      if (typeof child === "string") {
         child = new TextWrapper(child);
       }
-      if ((typeof child === 'object') && (child instanceof Array)) {
+      if (typeof child === "object" && child instanceof Array) {
         insertChildren(child);
       } else {
         ele.appendChild(child);
       }
     }
-  }
+  };
   insertChildren(children);
   return ele;
 }
