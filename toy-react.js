@@ -47,13 +47,22 @@ export class Component {
 
       let newChildren = newNode.vchildren;
       let oldChildren = oldNode.vchildren;
+
+      if (!newChildren || !newChildren.length) {
+        return;
+      }
+      let tailRange = oldChildren[oldChildren.length - 1]._range;
       for (let i = 0; i < newChildren.length; i++) {
         let newChild = newChildren[i];
         let oldChild = oldChildren[i];
         if (i < oldChildren.length) {
           update(oldChild, newChild);
         } else {
-          
+          let range = document.createRange();
+          range.setStart(tailRange.endContainer, tailRange.endOffset);
+          range.setEnd(tailRange.endContainer, tailRange.endOffset);
+          newChild[RENDER_TO_DOM](range);
+          tailRange = range;
         }
       }
 
@@ -142,7 +151,6 @@ class ElementWrapper extends Component{
   }
   [RENDER_TO_DOM](range) {
     this._range = range;
-    range.deleteContents();
     const root = document.createElement(this.type);
 
     for (const name in this.props) {
@@ -168,7 +176,7 @@ class ElementWrapper extends Component{
       childRange.deleteContents();
       child[RENDER_TO_DOM](childRange);
     }
-    range.insertNode(root);
+    replaceContent(range, root);
   }
 }
 
@@ -177,7 +185,6 @@ class TextWrapper extends Component{
     super(content);
     this.content = content;
     this.type = "#text";
-    this.root = document.createTextNode(content);
   }
   get vdom() {
     return this;
@@ -190,9 +197,18 @@ class TextWrapper extends Component{
   }
   [RENDER_TO_DOM](range) {
     this._range = range;
-    range.deleteContents();
-    range.insertNode(this.root);
+    const root = document.createTextNode(this.content);
+    replaceContent(range, root);
   }
+}
+
+function replaceContent(range, node) {
+  range.insertNode(node);
+  range.setStartAfter(node);
+  range.deleteContents();
+
+  range.setStartBefore(node);
+  range.setEndAfter(node);
 }
 
 export function createElement(type, attributes, ...children) {
